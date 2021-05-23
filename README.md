@@ -8,5 +8,5 @@ A Command Line Interface for morse code conversion, programmed in python
 >> git clone https://github.com/martin-otero/morse-CLI
 >> cd morse-CLI
 >> chmod +x morse-CLI.py
->> python3 morse-CLI '''
+>> python3 morse-CLI 
 ```
