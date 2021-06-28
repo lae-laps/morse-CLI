@@ -1,7 +1,12 @@
-                                                                   _
-                                                                  | |
- _ __ ___   ___  _ __ ___  ___        ___ ___  _ ____   _____ _ __| |_ ___ _ __
-| '_ ` _ \ / _ \| '__/ __|/ _ \______/ __/ _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|
-| | | | | | (_) | |  \__ \  __/_____| (_| (_) | | | \ V /  __/ |  | ||  __/ |
-|_| |_| |_|\___/|_|  |___/\___|      \___\___/|_| |_|\_/ \___|_|   \__\___|_|
-==============================================================================
+ ~ Help for morse-CLI ~ 
+ 
+ - Commands are introduced with slash ("/") 
+ 
+/help -> Prints this help table
+
+/play -> Plays how the morse code sounds 
+
+/save -> Saves all the morse code translated untill now to "morse.txt"
+
+/exit -> Exits the tool
+                                      
