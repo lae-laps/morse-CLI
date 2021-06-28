@@ -12,10 +12,7 @@ A Command Line Interface for morse code conversion, programmed in Python
 
 ```$ python3 main.py ```
 
-## Usage
-
-
- ~ Help for morse-CLI ~ 
+## Usage 
  
  - Commands are introduced with slash ("/") 
  
