@@ -1,194 +1,143 @@
-import os
-import sys
-import time
+import amino
+import curses
+from os import listdir, _exit
+from re import match
+from getpass import getpass
+from menu import menu
+from curses.textpad import rectangle
 
-dict = {
-        "A" : ".-",
-        "B" : "-...",
-        "C" : "-.-.",
-        "Ç" : "-.-..",
-        "D" : "-..",
-        "E" : ".",
-        "F" : "..-.",
-        "G" : "--.",
-        "H" : "....",
-        "I" : "..",
-        "J" : ".---",
-        "K" : "-.-",
-        "L" : ".-..",
-        "M" : "--",
-        "N" : "-.",
-        "Ñ" : "--.--",
-        "O" : "---",
-        "P" : ".--.",
-        "Q" : "--.-",
-        "R" : ".-.",
-        "S" : "...",
-        "T" : "-",
-        "U" : "..-",
-        "V" : "...-",
-        "W" : ".--",
-        "X" : "-..-",
-        "Y" : "-.--",
-        "Z" : "--..",
-        "1" : "-.-..",
-        "2" : "..---",
-        "3" : "...--",
-        "4" : "....-",
-        "5" : ".....",
-        "6" : "-....",
-        "7" : "--...",
-        "8" : "---..",
-        "9" : "----.",
-        "0" : "-----",
-        "." : ".-.-.-",
-        "," : "--..--",
-        "/" : "-..-.",
-        "¿" : "..-.-",
-        "?" : "..--..",
-        "-" : "-....-",
-        "\"" : ".-..-.",
-        "¡" : "--...-",
-        "!" : "-.-.--",
-        "=" : "-...-",
-        "(" : "-.--.",
-        ")" : "-.--.-",
-        "@" : ".--.-.",
-        ":" : "---...",
-        "_" : "..--.-",
-        "+" : ".-.-.",
-        "'" : ".----.",
-        "&" : ".-...",
-        ";" : "-.-.-.",
-        "$" : "...-..-",
-    }
+class Pos:
+    def __init__(self, stdscr):
+        self.y, self.x = stdscr.getmaxyx()
+        self.y -= 1
+        self.x -= 1
+        self.ceny = self.y//2
+        self.cenx = self.x//2
 
-# FUNCTIONS
-# =================================================================== #
 
-def get_morse(char):
-    if char in dict:
-        morse_char = dict[char]
-        return morse_char
-    else:
-        return "#"
+def lambdas(x, a):
+    return lambda: x(*a)
 
-def print_separar(text):
-    split_text = text.split()
-    for word in split_text:
-        for char in word:
-            morse_char = get_morse(char)
-            print(morse_char, end="")
-        print(" / ", end="")
-    print()
+def logout():
+    client.logout()
+    curses.endwin()
+    _exit(0)
 
-def write_separar(text):
-    morse = ""
-    split_text = text.split()
-    for word in split_text:
-        for char in word:
-            morse_char = get_morse(char)
-            morse += morse_char + " "
-        morse = morse + " / "
-    return morse
-
-def conditions(text, morse_list):
-    if text == "/help":
+def joincom(stdscr):
+    stdscr.move(8,0);stdscr.clrtobot()
+    while True:
+        stdscr.addstr(max.ceny-3, max.cenx-34//2, "Ingresa el aminoId de la comunidad")
+        stdscr.move(max.ceny-2, 0);stdscr.clrtobot()
+        rectangle(stdscr, max.ceny, (max.cenx-34//2)-5, max.ceny+2, (max.cenx-24//2)+28)
+        stdscr.addstr(max.ceny+6, max.cenx-58//2, "Pista: Si escribes 'exit' volverás a la pantalla anterior.")
+        cid = stdscr.getstr(max.ceny+1, (max.cenx-34//2)-4, 32).decode().strip()
+        if cid == "exit": break
         try:
-            help = open("help.txt", "r")
-            print(help.read())
-            help.close()
-        except:
-            print("Couldn't open \"help.txt\"")
+            x=client.search_community(cid).comId[0]
+        except Exception:
+            stdscr.addstr(max.ceny-1, (max.cenx-34//2)-5, "Comunidad no encontrado")
+            stdscr.addstr(max.y,0,"Presiona una tecla para continuar...")
+            stdscr.getch()
+            continue
+        client.join_community(x)
+        stdscr.addstr(max.ceny+4, (max.cenx-24//2)-5, f"Hecho!")
+        stdscr.addstr(max.y, 0, "Presiona una tecla para continuar...")
+        stdscr.getch()
+        break
 
-    elif text == "/exit":
-        sure = str(input("Sure you want to exit? - (Y/n): "))
-        sure = sure.lower()
-        if sure == "y":
-            print()
-            print("Exiting... ")
-            sys.exit(0)
-        else:
-            print(" - Not exiting - ")
+def chid(stdscr):
+    stdscr.move(8,0);stdscr.clrtobot()
+    while True:
+        stdscr.addstr(max.ceny-3, max.cenx-24//2, "Ingresa el link del chat")
+        stdscr.move(max.ceny-2, 0);stdscr.clrtobot()
+        rectangle(stdscr, max.ceny, (max.cenx-24//2)-5, max.ceny+2, (max.cenx-24//2)+28)
+        cid = stdscr.getstr(max.ceny+1, (max.cenx-24//2)-4, 32).decode().strip()
+        if not cid.startswith("http://aminoapps.com/p/"):
+            stdscr.addstr(max.ceny-1, (max.cenx-24//2)-5, "Link inválido.")
+            stdscr.addstr(max.y,0,"Presiona una tecla para continuar...")
+            stdscr.getch()
+            continue
+        stdscr.addstr(max.ceny+4, (max.cenx-24//2)-5, f"chatId: {client.get_from_code(cid).objectId}")
+        stdscr.addstr(max.y, 0, "Presiona una tecla para continuar...")
+        stdscr.getch()
+        break
 
-    elif text == "/play":
-        global morse_dt
-        global morse_pitch
+def com(stdscr, com):
+    stdscr.move(7,0);stdscr.clrtobot()
+    subclient = amino.SubClient(com, profile=client.profile)
+    stdscr.addstr(6,max.cenx-len(subclient.community.name)//2, subclient.community.name, curses.A_UNDERLINE)
+    stdscr.addstr(7, 0, f"comId: {subclient.comId}")
+    while True:
+        stdscr.clear()
+        stdscr.addstr(2,max.cenx-len("amino id finder")//2,"Amino ID Finder", curses.color_pair(196))
+        stdscr.addstr(4,max.cenx-len("by: darth venom")//2,"By: Darth Venom", curses.color_pair(34))
+        stdscr.addstr(6,max.cenx-len(subclient.community.name)//2, subclient.community.name, curses.A_UNDERLINE)
+        stdscr.addstr(6,0,f"perfil: {client.profile.nickname}")
+        stdscr.addstr(7, 0, f"comId: {subclient.comId}")
+        x = menu(stdscr, max.ceny, max.cenx-10, {"Obtener chatId": lambda: chid(stdscr), "Volver": lambda: 1})
+        if x:
+            return
 
-        print("playing", morse_list)
+def comupd(stdscr, coms):
+    coms.clear()
+    subs = client.sub_clients()
+    for i in range(len(subs.name)):
+        coms[subs.name[i]] = lambdas(com, (stdscr, subs.comId[i]))
+    coms["Unirse a una comunidad"] = lambda: joincom(stdscr)
+    coms["Actualizar lista"] = lambda: comupd(stdscr,coms)
+    coms["Cerrar sesión"] = logout
 
-        for i in range(len(morse_list)):
-            for char in morse_list[i]:
-                if char == "-":
-                    os.system('play -q -n synth %s sin %s' % (morse_dt, morse_pitch))
-                    time.sleep(morse_dt/3)
-                elif char == ".":
-                    os.system('play -q -n synth %s sin %s' % (morse_dt/3, morse_pitch))
-                    time.sleep(morse_dt/3)
-                elif char == "/":
-                    time.sleep(morse_dt*3)
+def main(stdscr):
+    global max
+    max = Pos(stdscr)
+    curses.use_default_colors()
+    curses.init_pair(196, 196, -1)
+    curses.init_pair(34, 34, -1)
+    curses.echo()
+    stdscr.addstr(2,max.cenx-len("amino id finder")//2,"Amino ID Finder", curses.color_pair(196))
+    stdscr.addstr(4,max.cenx-len("by: darth venom")//2,"By: Darth Venom", curses.color_pair(34))
+    stdscr.addstr(6,max.cenx-len("inicia sesion")//2,"Inicia sesión", curses.A_UNDERLINE)
+        
+    while True:
+        stdscr.addstr(9, max.x//4,"Email: ")
+        email = stdscr.getstr().decode()
+        if not match(r'[a-zA-Z0-9\.]+@[a-zA-Z]+\.[a-z]+', email):
+            stdscr.move(8,0);stdscr.clrtoeol()
+            stdscr.addstr(8, max.x//4, "Email inválido", curses.color_pair(196))
+            stdscr.clrtobot()
+            continue
+        curses.noecho()
+        stdscr.addstr(10,max.x//4,"Contraseña: ")
+        passw = stdscr.getstr().decode()
+        if not passw or len(passw) < 6:
+            stdscr.move(8,0);stdscr.clrtoeol()
+            stdscr.addstr(8, max.x//4, "La contraseña es inválida", curses.color_pair(196))
+            stdscr.clrtobot()
+            continue
+        curses.echo()
+        try:
+            client.login(email, passw)
+        except amino.exceptions.InvalidAccountOrPassword:
+            stdscr.move(8,0);stdscr.clrtoeol()
+            stdscr.addstr(8, max.x//4, "Email o contraseña incorrectos", curses.color_pair(196))
+            stdscr.clrtobot()
+            continue
+        break
+    stdscr.move(5,0);stdscr.clrtobot()
+    stdscr.addstr(6,0,f"perfil: {client.profile.nickname}")
+    subs = client.sub_clients()
+    coms = {}
+    for i in range(len(subs.name)):
+        coms[subs.name[i]] = lambdas(com, (stdscr, subs.comId[i]))
+    coms["Unirse a una comunidad"] = lambda: joincom(stdscr)
+    coms["Actualizar lista"] = lambda: comupd(stdscr,coms)
+    coms["Cerrar sesión"] = logout
+    while True:
+        stdscr.clear()
+        stdscr.addstr(2,max.cenx-len("amino id finder")//2,"Amino ID Finder", curses.color_pair(196))
+        stdscr.addstr(4,max.cenx-len("by: darth venom")//2,"By: Darth Venom", curses.color_pair(34))
+        stdscr.addstr(6,0,f"perfil: {client.profile.nickname}")
+        menu(stdscr, max.ceny, max.cenx-10, coms)
 
-    elif text == "/save":
-        save = str(input("Save? (Y/n): "))
-        save = save.lower()
-
-        if save == "y":
-            try:
-                # Create/Open file
-                if os.path.exists("morse.txt"):
-                    print("Opening file...")
-                    f = open("morse.txt", "w")
-                else:
-                    print("Creating file...")
-                    f = open("morse.txt", "x")
-
-                for i in range(len(morse_list)):
-                    print("Saving line", i + 1, "of", len(morse_list))
-                    f.write(morse_list[i],)
-                    f.write("\n")
-
-                print("Saving file...")
-                f.close()
-                print(" - File saved - ")
-            except Exception as e:
-                print('Could not open file "morse.txt"')
-                print(e)
-
-        elif save == "n":
-            pass
-        else:
-            print("Not recognized. ")
-
-    else:
-        return False
-
-try:
-    print("""
- _ __ ___   ___  _ __ ___  ___        ___ ___  _ ____   _____ _ __| |_ ___ _ __
-| '_ ` _ \ / _ \| '__/ __|/ _ \______/ __/ _ \| '_ \ \ / / _ \ '__| __/ _ \ '__|
-| | | | | | (_) | |  \__ \  __/_____| (_| (_) | | | \ V /  __/ |  | ||  __/ |
-|_| |_| |_|\___/|_|  |___/\___|      \___\___/|_| |_|\_/ \___|_|   \__\___|_|
-================================================================================""")
-except:
-    print("=================")
-    print("MORSE - CONVERTER")
-    print("=================")
-    print()
-
-morse_list = []
-
-# Morse parameters
-# Source: https://en.wikipedia.org/wiki/Morse_code
-# Source: https://www.youtube.com/watch?v=xsDk5_bktFo
-
-morse_dt = 0.18 # s
-morse_pitch = 2000 # Hz
-
-while(True):
-    text = str(input("Input Unicode text >> "))
-    test = conditions(text, morse_list)
-    if test == False:
-        text = text.upper()
-        print_separar(text)
-        morse_list.append(write_separar(text))
-        continue
+client = amino.Client()
+curses.wrapper(main)
